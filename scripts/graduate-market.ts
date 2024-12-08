@@ -33,7 +33,7 @@ async function main() {
     anchor.setProvider(provider);
 
     const idl = JSON.parse(fs.readFileSync('./target/idl/pump.json', 'utf8'));
-    const programId = new PublicKey("9ioKap41UwoQmff8DrkgcfMEkHXY5CzYRFhEAYLZPnmM");
+    const programId = new PublicKey("4qKuYQJ9hMGH8gqj1UWLPAYxNHxVvabz4kwSuE52in7f");
     const program = new Program(idl, programId, provider);
 
     const mintAddress = new PublicKey("ASrh692FC9qTqV84ux1UEezAs1kQL4HVGQaxmZrfe6gR");

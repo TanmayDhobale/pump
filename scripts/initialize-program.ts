@@ -8,13 +8,17 @@ import {
 } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import * as fs from 'fs';
+import * as path from 'path';
 
 async function main() {
   try {
+    // Setup connection
     const connection = new anchor.web3.Connection(
       "https://api.devnet.solana.com",
       "confirmed"
     );
+
+    // Load deployer keypair
     const rawKey = fs.readFileSync('./id.json', 'utf-8');
     const deployerKeypair = Keypair.fromSecretKey(
       Buffer.from(JSON.parse(rawKey))
@@ -27,13 +31,18 @@ async function main() {
     });
     anchor.setProvider(provider);
 
-    const idl = JSON.parse(fs.readFileSync('./target/idl/pump.json', 'utf8'));
-    const programId = new PublicKey("9ioKap41UwoQmff8DrkgcfMEkHXY5CzYRFhEAYLZPnmM");
+    // Load program
+    const idlPath = path.join(__dirname, '../target/idl/pump.json');
+    const idl = JSON.parse(fs.readFileSync(idlPath, 'utf8'));
+    const programId = new PublicKey("4qKuYQJ9hMGH8gqj1UWLPAYxNHxVvabz4kwSuE52in7f");
     const program = new Program(idl, programId, provider);
+
+    // Setup accounts
     const mintAddress = new PublicKey("ASrh692FC9qTqV84ux1UEezAs1kQL4HVGQaxmZrfe6gR");
     const feeWallet = Keypair.generate();
     const timestamp = new anchor.BN(Date.now() / 1000);
 
+    // Find PDA
     const [statePda, bump] = PublicKey.findProgramAddressSync(
       [Buffer.from("state_v2")],
       programId
@@ -48,23 +57,23 @@ async function main() {
     console.log("Timestamp:", timestamp.toString());
     console.log("Bump:", bump);
 
-    // Create and send transaction
-    const tx = await program.rpc.initialize(
-      feeWallet.publicKey,
-      new anchor.BN("1000000000"),
-      timestamp,
-      {
-        accounts: {
-          authority: deployerKeypair.publicKey,
-          state: statePda,
-          mint: mintAddress,
-          systemProgram: SystemProgram.programId,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          rent: SYSVAR_RENT_PUBKEY,
-        },
-        signers: [deployerKeypair]
-      }
-    );
+    // Initialize program
+    const tx = await program.methods
+      .initialize(
+        feeWallet.publicKey,
+        new anchor.BN("1000000000"),
+        timestamp
+      )
+      .accounts({
+        authority: deployerKeypair.publicKey,
+        state: statePda,
+        mint: mintAddress,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        rent: SYSVAR_RENT_PUBKEY,
+      })
+      .signers([deployerKeypair])
+      .rpc();
 
     console.log("Program initialized! Transaction:", tx);
 

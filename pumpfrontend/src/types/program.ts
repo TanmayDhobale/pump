@@ -1,29 +1,20 @@
-export interface PricePoint {
-  timestamp: number;
-  price: number;
-  volume: number;
-  marketCap: number;
-}
+import { BN } from '@project-serum/anchor';
 
-export enum TransactionType {
-  Buy = 'Buy',
-  Sell = 'Sell',
-}
-
-export interface PriceUpdate {
-  timestamp: number;
-  price: number;
-  volume: number;
-  marketCap: number;
-  transactionType: TransactionType;
-}
-
-export interface Transaction {
-  type: TransactionType | 'Unknown';
-  amount: number;
-  price: number;
-  timestamp: number;
-  address: string;
+export interface StateAccount {
+  authority: string;
+  feeWallet: string;
+  totalSupply: BN;
+  circulatingSupply: BN;
+  marketCap: BN;
+  graduated: boolean;
+  lpLocked: boolean;
+  timestamp: BN;
+  lpSupply: BN;
+  initialPrice: BN;
+  currentPrice: BN;
+  graduationThreshold: BN;
+  feePercentage: number;
+  lastUpdate: BN;
 }
 
 export interface MarketStats {
@@ -32,4 +23,11 @@ export interface MarketStats {
   circulatingSupply: number;
   currentPrice: number;
   graduated: boolean;
+  lpLocked: boolean;
+}
+
+export interface TradingStats {
+  loading: boolean;
+  error: string | null;
+  success: boolean;
 } 

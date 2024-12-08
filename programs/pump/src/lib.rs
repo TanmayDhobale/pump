@@ -423,6 +423,7 @@ pub struct UpdateFeeWallet<'info> {
     )]
     pub state: Account<'info, StateAccount>,
 
+    /// CHECK: This is just a public key for the new fee wallet, no account checks needed
     pub new_fee_wallet: AccountInfo<'info>,
 }
 
