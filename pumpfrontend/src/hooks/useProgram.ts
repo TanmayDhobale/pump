@@ -120,6 +120,24 @@ export const useProgram = () => {
     }
   }, [program, wallet.publicKey]);
 
+  const eventListeners = new Map<string, number>();
+
+  const addEventListener = (eventName: string, handler: (event: any) => void) => {
+    if (!program) return null;
+    const listener = program.addEventListener(eventName, handler);
+    eventListeners.set(eventName, listener);
+    return listener;
+  };
+
+  const removeEventListener = (eventName: string) => {
+    if (!program) return;
+    const listener = eventListeners.get(eventName);
+    if (listener) {
+      program.removeEventListener(listener);
+      eventListeners.delete(eventName);
+    }
+  };
+
   return {
     program,
     provider,

@@ -1,79 +1,72 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useProgram } from '@/hooks/useProgram';
-import { PriceChart } from './PriceChart';
+import { useEffect, useState } from 'react';
+import { formatNumber } from '@/utils/format';
+import { MarketStats as MarketStatsType } from '@/types/program';
 
-interface MarketStatsType {
-  marketCap: number;
-  totalSupply: number;
-  circulatingSupply: number;
-  currentPrice: number;
-  graduated: boolean;
-}
+const defaultStats: MarketStatsType = {
+  marketCap: 0,
+  totalSupply: 0,
+  circulatingSupply: 0,
+  currentPrice: 0,
+  graduated: false,
+  lpLocked: false,
+};
 
 export const MarketStats = () => {
   const { getMarketStats } = useProgram();
-  const [stats, setStats] = useState<MarketStatsType>({
-    marketCap: 0,
-    totalSupply: 0,
-    circulatingSupply: 0,
-    currentPrice: 0,
-    graduated: false,
-  });
+  const [stats, setStats] = useState<MarketStatsType>(defaultStats);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        setLoading(true);
         const marketStats = await getMarketStats();
-        setStats({
-          marketCap: Number(marketStats.marketCap),
-          totalSupply: Number(marketStats.totalSupply),
-          circulatingSupply: Number(marketStats.circulatingSupply),
-          currentPrice: Number(marketStats.currentPrice),
-          graduated: Boolean(marketStats.graduated),
-        });
-      } catch (error) {
-        console.error('Error fetching market stats:', error);
+        if (marketStats) {
+          setStats({
+            marketCap: Number(marketStats.marketCap || 0),
+            totalSupply: Number(marketStats.totalSupply || 0),
+            circulatingSupply: Number(marketStats.circulatingSupply || 0),
+            currentPrice: Number(marketStats.currentPrice || 0),
+            graduated: Boolean(marketStats.graduated),
+            lpLocked: Boolean(marketStats.lpLocked),
+          });
+        }
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching market stats:', err);
+        setError('Failed to fetch market stats');
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchStats();
-    const interval = setInterval(fetchStats, 10000);
+    const interval = setInterval(fetchStats, 5000);
     return () => clearInterval(interval);
   }, [getMarketStats]);
 
+  if (loading) return <div className="text-center">Loading market stats...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
+
   return (
-    <div className="space-y-6">
-      <div className="p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-        <h2 className="text-2xl font-bold mb-6">Market Stats</h2>
-        <div className="grid gap-4">
-          <div className="flex justify-between">
-            <span>Market Cap</span>
-            <span className="font-mono">${stats.marketCap.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Current Price</span>
-            <span className="font-mono">${stats.currentPrice.toFixed(6)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Circulating Supply</span>
-            <span className="font-mono">{stats.circulatingSupply.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Total Supply</span>
-            <span className="font-mono">{stats.totalSupply.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Status</span>
-            <span className={`font-mono ${stats.graduated ? 'text-green-500' : 'text-yellow-500'}`}>
-              {stats.graduated ? 'Graduated' : 'Pre-graduation'}
-            </span>
-          </div>
+    <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+      <h2 className="text-2xl font-bold mb-4">Market Stats</h2>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <p>Market Cap: {formatNumber(stats.marketCap)} SOL</p>
+          <p>Total Supply: {formatNumber(stats.totalSupply)} tokens</p>
+          <p>Circulating Supply: {formatNumber(stats.circulatingSupply)} tokens</p>
+        </div>
+        <div>
+          <p>Current Price: {formatNumber(stats.currentPrice)} SOL</p>
+          <p>Graduated: {stats.graduated ? 'Yes' : 'No'}</p>
+          <p>LP Locked: {stats.lpLocked ? 'Yes' : 'No'}</p>
         </div>
       </div>
-      
-      <PriceChart />
     </div>
   );
 }; 

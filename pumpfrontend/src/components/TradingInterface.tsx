@@ -3,42 +3,59 @@
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useProgram } from '@/hooks/useProgram';
+import { formatNumber } from '@/utils/format';
 
 export const TradingInterface = () => {
   const [amount, setAmount] = useState('');
   const [isBuying, setIsBuying] = useState(true);
   const { connected } = useWallet();
-  const { buyTokens, sellTokens, loading } = useProgram();
+  const { buyTokens, sellTokens, loading, error, getMarketStats } = useProgram();
+  const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
+
+  const handleAmountChange = async (value: string) => {
+    setAmount(value);
+    if (!value || isNaN(Number(value))) {
+      setEstimatedCost(null);
+      return;
+    }
+
+    const stats = await getMarketStats();
+    if (stats) {
+      const cost = Number(value) * stats.currentPrice;
+      setEstimatedCost(cost);
+    }
+  };
 
   const handleTrade = async () => {
     if (!amount || loading || !connected) return;
 
-    try {
-      if (isBuying) {
-        await buyTokens(parseFloat(amount));
-      } else {
-        await sellTokens(parseFloat(amount));
-      }
-      setAmount('');
-    } catch (error) {
-      console.error('Trade failed:', error);
+    const parsedAmount = Number(amount);
+    if (isNaN(parsedAmount)) return;
+
+    if (isBuying) {
+      await buyTokens(parsedAmount);
+    } else {
+      await sellTokens(parsedAmount);
     }
+
+    setAmount('');
+    setEstimatedCost(null);
   };
 
   return (
-    <div className="p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-      <div className="flex gap-4 mb-6">
+    <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+      <div className="flex gap-2 mb-4">
         <button
-          className={`flex-1 py-2 rounded-lg ${
-            isBuying ? 'bg-purple-600' : 'bg-transparent border border-purple-600'
+          className={`flex-1 py-2 px-4 rounded ${
+            isBuying ? 'bg-green-500' : 'bg-gray-600'
           }`}
           onClick={() => setIsBuying(true)}
         >
           Buy
         </button>
         <button
-          className={`flex-1 py-2 rounded-lg ${
-            !isBuying ? 'bg-purple-600' : 'bg-transparent border border-purple-600'
+          className={`flex-1 py-2 px-4 rounded ${
+            !isBuying ? 'bg-red-500' : 'bg-gray-600'
           }`}
           onClick={() => setIsBuying(false)}
         >
@@ -49,17 +66,31 @@ export const TradingInterface = () => {
       <input
         type="number"
         value={amount}
-        onChange={(e) => setAmount(e.target.value)}
+        onChange={(e) => handleAmountChange(e.target.value)}
         placeholder="Enter amount"
-        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 mb-4"
+        className="w-full p-2 mb-4 bg-gray-700 rounded text-white"
       />
+
+      {estimatedCost !== null && (
+        <div className="mb-4 text-sm">
+          Estimated {isBuying ? 'Cost' : 'Return'}: {formatNumber(estimatedCost)} SOL
+        </div>
+      )}
+
+      {error && <div className="text-red-500 mb-4">{error}</div>}
 
       <button
         onClick={handleTrade}
-        disabled={!connected || !amount || loading}
-        className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 py-3 rounded-lg"
+        disabled={!connected || loading || !amount}
+        className={`w-full py-2 px-4 rounded ${
+          !connected || loading
+            ? 'bg-gray-600'
+            : isBuying
+            ? 'bg-green-500 hover:bg-green-600'
+            : 'bg-red-500 hover:bg-red-600'
+        }`}
       >
-        {loading ? 'Processing...' : isBuying ? 'Buy Tokens' : 'Sell Tokens'}
+        {loading ? 'Processing...' : connected ? `${isBuying ? 'Buy' : 'Sell'} Tokens` : 'Connect Wallet'}
       </button>
     </div>
   );
