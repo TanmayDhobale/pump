@@ -1,0 +1,29 @@
+[features]
+seeds = false
+skip-lint = false
+
+[programs.devnet]
+pump = "4qKuYQJ9hMGH8gqj1UWLPAYxNHxVvabz4kwSuE52in7f"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "devnet"
+wallet = "./id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[workspace]
+types = "target/types"
+members = ["programs/pump"]
+
+[workspace.metadata]
+program-size = 4194304  # 4MB in bytes
+
+[workspace.programs]
+size = 4194304  # 4MB in bytes
+
+[workspace.dependencies]
+solana-program = "1.17"

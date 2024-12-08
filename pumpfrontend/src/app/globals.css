@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-geist-sans), sans-serif;
+}
+
+.wallet-button {
+  background: linear-gradient(to right, #8b5cf6, #3b82f6) !important;
+  border: none !important;
+  color: white !important;
+  height: 48px !important;
+  padding: 0 24px !important;
+  border-radius: 9999px !important;
+  font-family: var(--font-geist-sans), sans-serif !important;
+  font-weight: 500 !important;
+  transition: opacity 0.2s !important;
+}
+
+.wallet-button:hover {
+  opacity: 0.9 !important;
+}
